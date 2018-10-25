@@ -20,9 +20,9 @@ pipeline {
             steps {
                 script{
                     sym_ver = "${current_tag}".tokenize('.')
-		    sh'echo ${current_tag}'
+		    bat'echo ${current_tag}'
                     build_version = sym_ver[3] as Integer
-					echo "Overriding the current build_version value ${build_version} by ${env.BUILD_NUMBER}"
+		    echo "Overriding the current build_version value ${build_version} by ${env.BUILD_NUMBER}"
                     build_version = "${env.BUILD_NUMBER}"
                     next_tag = "${params.RELEASE_VERSION}.${build_version}"
                     echo "Creating new tag build_version value is: ${next_tag}"		
