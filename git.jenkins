@@ -7,11 +7,11 @@ pipeline {
     parameters {
         string(defaultValue: '1.5.0', description: 'Specify the build version to promote to QA', name: 'RELEASE_VERSION')
         booleanParam (defaultValue: true, description: '', name : 'create_tag')
-		booleanParam (defaultValue: false, description: 'Skip Backend Test', name : 'skipBackendTests')
+                             booleanParam (defaultValue: false, description: 'Skip Backend Test', name : 'skipBackendTests')
     }
 
     stages {
-	stage('Git Tag Push To Origin') {
+              stage('Git Tag Push To Origin') {
             when {
                 expression {
                     return !("${current_tag}"=="${params.RELEASE_VERSION}.${env.BUILD_NUMBER}") || params.create_tag
@@ -19,13 +19,15 @@ pipeline {
             }
             steps {
                 script{
-                    sym_ver = "${current_tag}".tokenize('.')
-		    bat'echo ${current_tag}'
-                    build_version = sym_ver[3] as Integer
-		    echo "Overriding the current build_version value ${build_version} by ${env.BUILD_NUMBER}"
+                                                                        current_tag = bat(script: 'git describe --tags $(git rev-list --tags --max-count=1)', returnStdout: true).trim()
+                                                                        echo "The current_tag is: ${current_tag}"
+                    bat'${current_tag}'
+                                                                        sym_ver = "${current_tag}".tokenize('.')
+                                                                        build_version = sym_ver[3] as Integer
+                                                                        echo "Overriding the current build_version value ${build_version} by ${env.BUILD_NUMBER}"
                     build_version = "${env.BUILD_NUMBER}"
                     next_tag = "${params.RELEASE_VERSION}.${build_version}"
-                    echo "Creating new tag build_version value is: ${next_tag}"		
+                    echo "Creating new tag build_version value is: ${next_tag}"                 
 
                   
                     }
