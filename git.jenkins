@@ -27,15 +27,7 @@ pipeline {
                     next_tag = "${params.RELEASE_VERSION}.${build_version}"
                     echo "Creating new tag build_version value is: ${next_tag}"		
 
-                    withCredentials([sshUserPrivateKey(credentialsId: 'mhgcloudnet-ssh', keyFileVariable: 'GITHUB_KEY')]) {
-                        sh 'echo ssh -i $GITHUB_KEY -l git -o StrictHostKeyChecking=no \\"\\$@\\" > run_ssh.sh'
-                        sh 'chmod +x run_ssh.sh'
-                        withEnv(['GIT_SSH=run_ssh.sh']) {
-                           // Only delete local tag. If tag exists at remote, it's bigger issue and should be handled manually.
-                           sh "git tag --delete ${next_tag} &> /dev/null || echo 'No such tag!'"
-                           sh "git tag ${next_tag}"
-                           sh "git push origin tag ${next_tag}"
-                        }
+                  
                     }
                 }              
             }
