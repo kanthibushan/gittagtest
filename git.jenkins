@@ -1,0 +1,45 @@
+def build_version = ''
+def next_tag = ''
+def current_tag = ''
+
+pipeline {
+    agent any
+    parameters {
+        string(defaultValue: '1.5.0', description: 'Specify the build version to promote to QA', name: 'RELEASE_VERSION')
+        booleanParam (defaultValue: true, description: '', name : 'create_tag')
+		booleanParam (defaultValue: false, description: 'Skip Backend Test', name : 'skipBackendTests')
+    }
+
+    stages {
+	stage('Git Tag Push To Origin') {
+            when {
+                expression {
+                    return !("${current_tag}"=="${params.RELEASE_VERSION}.${env.BUILD_NUMBER}") || params.create_tag
+                }
+            }
+            steps {
+                script{
+                    sym_ver = "${current_tag}".tokenize('.')
+					echo ${current_tag}
+                    build_version = sym_ver[3] as Integer
+					echo "Overriding the current build_version value ${build_version} by ${env.BUILD_NUMBER}"
+                    build_version = "${env.BUILD_NUMBER}"
+                    next_tag = "${params.RELEASE_VERSION}.${build_version}"
+                    echo "Creating new tag build_version value is: ${next_tag}"		
+
+                    withCredentials([sshUserPrivateKey(credentialsId: 'mhgcloudnet-ssh', keyFileVariable: 'GITHUB_KEY')]) {
+                        sh 'echo ssh -i $GITHUB_KEY -l git -o StrictHostKeyChecking=no \\"\\$@\\" > run_ssh.sh'
+                        sh 'chmod +x run_ssh.sh'
+                        withEnv(['GIT_SSH=run_ssh.sh']) {
+                           // Only delete local tag. If tag exists at remote, it's bigger issue and should be handled manually.
+                           sh "git tag --delete ${next_tag} &> /dev/null || echo 'No such tag!'"
+                           sh "git tag ${next_tag}"
+                           sh "git push origin tag ${next_tag}"
+                        }
+                    }
+                }              
+            }
+        }
+	}
+}
+	
